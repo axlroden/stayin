@@ -39,7 +39,6 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         name: "${{ env.STAYIN_VERSION }}"
-        tag: "${{ env.STAYIN_VERSION }}"
         artifacts: "stay-in--${{ env.STAYIN_VERSION }}.zip"
         artifactContentType: application/zip
         generateReleaseNotes: False
