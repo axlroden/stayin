@@ -4,7 +4,6 @@ block_cipher = None
 
 
 a = Analysis(['automator.py'],
-             pathex=['src'],
              binaries=[],
              datas=[('data/*', 'data')],
              hiddenimports=[],
