@@ -1,0 +1,4 @@
+pyautogui
+PySimpleGUI
+opencv-python-headless
+protobuf
