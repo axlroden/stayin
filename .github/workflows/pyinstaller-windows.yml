@@ -2,9 +2,9 @@ name: Package exe with PyInstaller - Windows
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    paths:
+      - 'version'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,3 +22,22 @@ jobs:
       with:
         name: my-exe
         path: src/dist/windows # or path/to/artifact
+
+    - name: Get version
+      run: echo "STAYIN_VERSION=$(cat version)" >> $GITHUB_ENV
+
+    - name: Archive Release
+      uses: thedoctor0/zip-release@master
+      with:
+        type: "zip"
+        filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
+        path: src/dist/windows/
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        name: "${{ env.STAYIN_VERSION }}"
+        tag: "${{ env.STAYIN_VERSION }}"
+        artifacts: "stay-in--${{ env.STAYIN_VERSION }}.zip"
+        artifactContentType: application/zip
+        generateReleaseNotes: False
+        token: ${{ secrets.GITHUB_TOKEN }}
