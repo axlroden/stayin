@@ -22,12 +22,8 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        path: dist/*
-
-    - uses: actions/upload-artifact@v2
-      with:
         name: stayin exe
-        path: "src/dist/Auto Stay In.exe" # or path/to/artifact
+        path: "src/dist/*"
 
     - name: Get version
       run: echo "STAYIN_VERSION=$(cat version)" >> $GITHUB_ENV
@@ -37,7 +33,8 @@ jobs:
       with:
         type: "zip"
         filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
-        path: "src/dist/Aut Stay In.exe"
+        path: "src/dist/stayin.exe"
+
     - name: Create release
       uses: ncipollo/release-action@v1
       with:
