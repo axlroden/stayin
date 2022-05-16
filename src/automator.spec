@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['automator.py'],
-             pathex=['C:\\Users\\alexr\\Desktop\\EQ\\automate'],
+             pathex=['src'],
              binaries=[],
              datas=[('data/*', 'data')],
              hiddenimports=[],
