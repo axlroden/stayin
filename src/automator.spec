@@ -5,7 +5,7 @@ block_cipher = None
 
 a = Analysis(['automator.py'],
              binaries=[],
-             datas=['data/*', 'data'],
+             datas=[('data', 'data')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
