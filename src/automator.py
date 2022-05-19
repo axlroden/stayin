@@ -9,7 +9,7 @@ from time import sleep
 import PySimpleGUI as sg
 from datetime import datetime
 from imagesearch import imagesearch, click_image, imagesearch_numLoop
-
+from screeninfo import get_monitors
 
 def main():
     """
@@ -24,42 +24,68 @@ def main():
                             echo_stdout_stderr=True,
                             reroute_cprint=True)]]
 
-    global running
     global window
     window = sg.Window('Auto Stay In', layout, finalize=True)
-    t1 = automator()
+    t1 = Automator()
     while True:
         event, values = window.Read()
         if event is None:
             break
         if event == 'startbutton':
             if t1.is_alive():
-                running = False
-                # wait for termination
-                t1.join()
-            running = True
-            t1.start()
+                t1.resume()
+            else:
+                t1.start()
             window.Element('startbutton').Update('Restart')
         if event == 'stopbutton':
-            running = False
-            t1.join()
+            t1.pause()
             window.Element('startbutton').Update('Start')
     window.Close()
 
 
-class automator(threading.Thread):
+class Automator(threading.Thread):
     """
-    Main loop
+    Main thread
     """
     def __init__(self):
-        threading.Thread.__init__(self)
+        super(Automator, self).__init__()
+        self.paused = True
+        self.state = threading.Condition()
+        self.daemon = True
         self.base_path = getattr(sys, '_MEIPASS', '.') + '/data/'
         self.wow_classic_path, self.bnet_launcher_path = self.installpath()
         self.logmsg("WoW Classic path: {}".format(self.wow_classic_path))
         self.logmsg("Battle.net Launcher path: {}".format(self.bnet_launcher_path))
+        # Check for 1080/1440p
+        for m in get_monitors():
+            if m.is_primary is True:
+                self.monitor_width = m.width
+                self.monitor_height = m.height
+        if self.monitor_height == 1080:
+            self.logmsg("Detected 1080p monitor")
+        elif self.monitor_height == 1440:
+            self.logmsg("Detected 1440p monitor")
+        else:
+            self.logmsg("Detected unsupported monitor resolution")
+            sys.exit()
+        self.play_img = self.base_path + "play.png"
+        self.update_img = self.base_path + "update.png"
+        self.change_realm_img = "{}change_realm_{}.png".format(self.base_path, self.monitor_height)
+        self.enter_world_img = "{}enter_world_{}.png".format(self.base_path, self.monitor_height)
+        self.okay_img = "{}okay_{}.png".format(self.base_path, self.monitor_height)
+        self.reconnect_img = "{}reconnect_{}.png".format(self.base_path, self.monitor_height)
+        self.wow_img = "{}wow_{}.png".format(self.base_path, self.monitor_height)
 
     def run(self):
-        while running is True:
+        self.resume()
+        loggedmsg = False
+        while True:
+            with self.state:
+                if self.paused:
+                    self.logmsg("Stopped")
+                    self.state.wait()  # Wait until notified
+                    loggedmsg = False
+                    continue
             # Make sure wow is not running
             self.logmsg("Killing WoW for fresh start")
             os.system('taskkill /f /im WowClassic.exe')
@@ -72,90 +98,102 @@ class automator(threading.Thread):
             subprocess.Popen(cmd, shell=True)
             # Wait for play button
             self.logmsg("Waiting for play button")
-            pos = imagesearch_numLoop(self.base_path + "play.png", 3, 7)
+            pos = imagesearch_numLoop(self.play_img, 3, 7)
             if pos[0] != -1:
-                click_image(self.base_path + "play.png", pos, "left", 0.2, offset=5)
+                click_image(self.play_img, pos, "left", 0.2, offset=5)
             else:
                 self.logmsg("Is there an Update button?")
-                pos = imagesearch_numLoop(self.base_path + "update.png", 3, 2)
+                pos = imagesearch_numLoop(self.update_img, 3, 2)
                 if pos[0] != -1:
-                    click_image(self.base_path + "update.png", pos, "left", 0.2, offset=5)
+                    click_image(self.update_img, pos, "left", 0.2, offset=5)
                     self.logmsg("Updating..")
-                    pos = imagesearch_numLoop(self.base_path + "play.png", 3, 40)
+                    pos = imagesearch_numLoop(self.play_img, 3, 40)
                     self.logmsg("Waiting for play button")
                     if pos[0] != -1:
-                        click_image(self.base_path + "play.png", pos, "left", 0.2, offset=5)
+                        click_image(self.play_img, pos, "left", 0.2, offset=5)
                     else:
                         self.logmsg("Play button not found after a long time.. try again.")
-                        break
+                        self.paused = True
+                        continue
                 else:
                     self.logmsg("Play button not found, \nmake sure Battle.net client is visibile and try again.")
-                    break
+                    self.paused = True
+                    continue
 
             # Enter world
             self.logmsg("Waiting for character select")
-            while running is True:
-                pos = imagesearch(self.base_path + "change_realm.png")
+            while True:
+                with self.state:
+                    if self.paused:
+                        break
+                pos = imagesearch(self.change_realm_img)
                 if pos[0] != -1:
                     # Fuck there's queue...
-
+                    if loggedmsg is False:
+                        self.logmsg("Queue detected.. waiting..")
+                        loggedmsg = True
                     self.sleep(20)
                     continue
-                pos = imagesearch(self.base_path + "enter_world.png")
+                loggedmsg = False
+                pos = imagesearch(self.enter_world_img)
                 if pos[0] != -1:
                     self.logmsg("Enter WoW")
                     # Enter world button is there!
-                    click_image(self.base_path + "enter_world.png", pos, "left", 0.2, offset=5)
+                    click_image(self.enter_world_img, pos, "left", 0.2, offset=5)
                     self.sleep(5)
                     break
 
             # Ok now we are hopefully in the game !
             self.logmsg("In game!")
-            while running is True:
-                pos = imagesearch(self.base_path + "wow.png")
+            while True:
+                with self.state:
+                    if self.paused:
+                        break
+                pos = imagesearch(self.wow_img)
                 if pos[0] != -1:
                     self.logmsg("Not in game anymore.")
                     # Fuck we are not in game anymore..
                     # Checking for Enter World
                     self.logmsg("Checking for Enter World")
-                    pos = imagesearch(self.base_path + "enter_world.png")
+                    pos = imagesearch(self.enter_world_img)
                     if pos[0] != -1:
                         # Enter world button is there!
                         self.logmsg("Char select, in again")
-                        click_image(self.base_path + "enter_world.png", pos, "left", 0.2, offset=5)
+                        click_image(self.enter_world_img, pos, "left", 0.2, offset=5)
                         self.logmsg("In game!")
                     else:
                         # Checking for reconnect button
-                        pos = imagesearch(self.base_path + "reconnect.png")
-                        if pos[0] != -1:
+                        posreconnect = imagesearch(self.reconnect_img)
+                        if posreconnect[0] != -1:
                             # Reconnect button is there!
                             self.logmsg("Reconnect!")
-                            pos = imagesearch(self.base_path + "okay.png")
+                            pos = imagesearch(self.okay_img)
                             if pos[0] != -1:
                                 self.logmsg("Found okay button pressing before reconnect")
-                                click_image(self.base_path + "okay.png", pos, "left", 0.2, offset=5)
-                            self.sleep(3)
-                            click_image(self.base_path + "reconnect.png", pos, "left", 0.2, offset=5)
+                                click_image(self.okay_img, pos, "left", 0.2, offset=5)
+                            self.sleep(1)
+                            click_image(self.reconnect_img, posreconnect, "left", 0.2, offset=5)
                             # Wait for char select
                             self.logmsg("wait for char select for 20 secs max")
-                            pos = imagesearch_numLoop(self.base_path + "enter_world.png", 1, 20)
+                            pos = imagesearch_numLoop(self.enter_world_img, 1, 20)
                             if pos[0] != -1:
-                                click_image(self.base_path + "enter_world.png", pos, "left", 0.2, offset=5)
+                                click_image(self.enter_world_img, pos, "left", 0.2, offset=5)
                                 self.logmsg("In game!")
-                            else:
-                                self.logmsg("Didn't see it .. restart time.")
-                                break
+                                continue
+                    self.logmsg("Didn't see any buttons to press .. restart time.")
+                    break
 
                 # Randomize recheck to not be consistent bot behaviour
-                self.sleep(random.randint(10, 40))
+                self.sleep(random.randint(3, 8))
 
     def sleep(self, secs):
         """
-        Sleeps for x seconds, but kill thread if we stop running.
+        Sleeps for x seconds, but pause thread if we stop running.
         """
         for i in range(secs):
-            if running is False:
-                sys.exit()
+            with self.state:
+                if self.paused:
+                    break
             sleep(1)
 
     def installpath(self):
@@ -178,6 +216,15 @@ class automator(threading.Thread):
 
     def logmsg(self, msg):
         window.Element('_OUTPUT_').Update("{} {}\n".format(datetime.now().strftime("%H:%M:%S"), msg), append=True)
+
+    def pause(self):
+        with self.state:
+            self.paused = True  # Block self.
+
+    def resume(self):
+        with self.state:
+            self.paused = False
+            self.state.notify()  # Unblock self if waiting.
 
 if __name__ == '__main__':
     main()
