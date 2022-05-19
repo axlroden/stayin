@@ -1,9 +1,6 @@
 name: Package exe with PyInstaller - Windows
 
-on:
-  push:
-    paths:
-      - 'version'
+on: push
   workflow_dispatch:
 
 jobs:
@@ -40,12 +37,8 @@ jobs:
         filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
         path: "src/dist/stayin.exe"
 
-    - name: Create release
-      uses: ncipollo/release-action@v1
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        name: "${{ env.STAYIN_VERSION }}"
-        artifacts: "stay-in-${{ env.STAYIN_VERSION }}.zip"
-        tag: ${{ github.sha }}
-        artifactContentType: application/zip
-        generateReleaseNotes: True
-        token: ${{ secrets.GITHUB_TOKEN }}
+        files: "stay-in-${{ env.STAYIN_VERSION }}.zip"
