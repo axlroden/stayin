@@ -13,20 +13,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Get version
+      run: echo "STAYIN_VERSION=$(cat version)" >> $GITHUB_ENV
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
-
     - run: pip install -r src/requirements.txt pyinstaller
-    - run: cd src && pyinstaller automator.spec
+    - run: cd src && --clean -y automator.spec
 
     - uses: actions/upload-artifact@v2
       with:
         name: stayin exe
         path: "src/dist/*"
-
-    - name: Get version
-      run: echo "STAYIN_VERSION=$(cat version)" >> $GITHUB_ENV
 
     - name: Archive Release
       uses: thedoctor0/zip-release@master
@@ -39,8 +37,7 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         name: "${{ env.STAYIN_VERSION }}"
-        tag: "${{ github.ref }}"
         artifacts: "stay-in--${{ env.STAYIN_VERSION }}.zip"
         artifactContentType: application/zip
-        generateReleaseNotes: False
+        generateReleaseNotes: True
         token: ${{ secrets.GITHUB_TOKEN }}
