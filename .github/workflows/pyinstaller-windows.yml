@@ -13,13 +13,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Get version
-      run: echo "STAYIN_VERSION=$(cat version)" >> $GITHUB_ENV
+    - name: Get release version
+      id: get_release_info
+      shell: bash
+      run: |
+        value=`cat version`
+        echo ::set-output name=version::$value
+
     - uses: actions/setup-python@v3
       with:
         python-version: '3.10'
-    - run: pip install -r src/requirements.txt pyinstaller
-    - run: cd src && pyinstaller --clean -y automator.spec
+    - run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt pyinstaller
+    - run: |
+        cd src
+        pyinstaller --clean -y automator.spec
 
     - uses: actions/upload-artifact@v2
       with:
@@ -30,14 +39,15 @@ jobs:
       uses: thedoctor0/zip-release@master
       with:
         type: "zip"
-        filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
+        filename: "stay-in-${{ steps.get_release_info.outputs.version }}.zip"
         path: "src/dist/stayin.exe"
 
     - name: Create release
       uses: ncipollo/release-action@v1
       with:
-        name: "${{ env.STAYIN_VERSION }}"
-        artifacts: "stay-in--${{ env.STAYIN_VERSION }}.zip"
+        name: "${{ steps.get_release_info.outputs.version }}"
+        artifacts: "stay-in--${{ steps.get_release_info.outputs.version }}.zip"
+        tag: ${{ github.sha }}
         artifactContentType: application/zip
         generateReleaseNotes: True
         token: ${{ secrets.GITHUB_TOKEN }}
