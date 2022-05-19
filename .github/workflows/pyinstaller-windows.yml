@@ -30,7 +30,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: stayin exe
+        name: stayin
         path: "src/dist/*"
 
     - name: Archive Release
