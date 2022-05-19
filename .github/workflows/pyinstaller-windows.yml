@@ -13,12 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Get release version
-      id: get_release_info
-      shell: bash
-      run: |
-        value=`cat version`
-        echo ::set-output name=version::$value
+
+    - run: |
+        chcp 65001 #set code page to utf-8
+        echo ("STAYIN_VERSION="$(cat version)") >> $env:GITHUB_ENV
 
     - uses: actions/setup-python@v3
       with:
@@ -39,14 +37,14 @@ jobs:
       uses: thedoctor0/zip-release@master
       with:
         type: "zip"
-        filename: "stay-in-${{ steps.get_release_info.outputs.version }}.zip"
+        filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
         path: "src/dist/stayin.exe"
 
     - name: Create release
       uses: ncipollo/release-action@v1
       with:
-        name: "${{ steps.get_release_info.outputs.version }}"
-        artifacts: "stay-in--${{ steps.get_release_info.outputs.version }}.zip"
+        name: "${{ env.STAYIN_VERSION }}"
+        artifacts: "stay-in-${{ env.STAYIN_VERSION }}.zip"
         tag: ${{ github.sha }}
         artifactContentType: application/zip
         generateReleaseNotes: True
