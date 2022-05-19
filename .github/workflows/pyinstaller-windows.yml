@@ -2,23 +2,45 @@ name: Package exe with PyInstaller - Windows
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    paths:
+      - 'version'
+  workflow_dispatch:
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: PyInstaller Windows
-      uses: JackMcKew/pyinstaller-action-windows@main
+    - uses: actions/setup-python@v3
       with:
-        path: src
+        python-version: '3.10'
+
+    - run: pip install -r src/requirements.txt pyinstaller
+    - run: cd src && pyinstaller automator.spec
 
     - uses: actions/upload-artifact@v2
       with:
-        name: my-exe
-        path: src/dist/windows # or path/to/artifact
+        name: stayin exe
+        path: "src/dist/*"
+
+    - name: Get version
+      run: echo "STAYIN_VERSION=$(cat version)" >> $GITHUB_ENV
+
+    - name: Archive Release
+      uses: thedoctor0/zip-release@master
+      with:
+        type: "zip"
+        filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
+        path: "src/dist/stayin.exe"
+
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        name: "${{ env.STAYIN_VERSION }}"
+        tag: "${{ github.ref }}"
+        artifacts: "stay-in--${{ env.STAYIN_VERSION }}.zip"
+        artifactContentType: application/zip
+        generateReleaseNotes: False
+        token: ${{ secrets.GITHUB_TOKEN }}
