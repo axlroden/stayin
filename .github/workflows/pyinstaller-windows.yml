@@ -52,6 +52,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: "src/dist/stay-in-${{ env.STAYIN_VERSION }}.zip"
-        tag: "${{ env.STAYIN_VERSION }}"
+        tag_name: "${{ env.STAYIN_VERSION }}"
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
