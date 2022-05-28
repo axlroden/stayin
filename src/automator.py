@@ -131,6 +131,9 @@ class Automator(threading.Thread):
                 with self.state:
                     if self.paused:
                         break
+                if not process_exists("WowClassic.exe"):
+                    self.logmsg("WoW not running ? Restarting")
+                    break
                 pos = imagesearch(self.wow_img)
                 if pos[0] != -1:
                     self.logmsg("Not in game anymore.")
@@ -143,6 +146,7 @@ class Automator(threading.Thread):
                         self.logmsg("Char select, in again")
                         click_image(self.enter_world_img, pos, "left", 0.2, offset=5)
                         self.logmsg("In game!")
+                        continue
                     else:
                         # Checking for reconnect button
                         posreconnect = imagesearch(self.reconnect_img)

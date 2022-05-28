@@ -21,13 +21,15 @@ jobs:
         python-version: '3.10'
         cache: 'pipenv'
  
-    - name: Install pipenv
-      uses: dschep/install-pipenv-action@v1
+    - name: install dependencies
+      run: |
+        cd src
+        pip install --upgrade pip wheel pipenv
+        pipenv install
  
     - name: build binary
       run: |
         cd src
-        pipenv install
         pipenv run pyinstaller --clean -y automator.spec
 
     - uses: actions/upload-artifact@v2
