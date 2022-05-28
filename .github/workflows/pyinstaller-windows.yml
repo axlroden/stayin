@@ -27,7 +27,7 @@ jobs:
     - name: build binary
       run: |
         cd src
-        pyinstaller --clean -y automator.spec
+        pipenv run pyinstaller --clean -y automator.spec
 
     - uses: actions/upload-artifact@v2
       with:
