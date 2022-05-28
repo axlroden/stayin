@@ -5,6 +5,7 @@ This will check your Battle.net installation, and find the correct folders from 
 Then it will start the battle.net launcher and click play, wait for char select and enter the world.
 On disconnects/reconnects it will auto rejoin the server.
 
-# Github problems
+# Settings
 
-Cant get the binary to compile correctly and function on github.. you can do it your self on your own computer.
+Depending on your computer you may have to increase/decrease the time to wait for the Battle.net launcher to render the play button. 
+The default 5 seems ok though.
