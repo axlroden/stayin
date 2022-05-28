@@ -3,6 +3,4 @@ PySimpleGUI
 opencv-python-headless
 protobuf
 screeninfo
-win32gui
-win32api
-win32con
+pywin32
