@@ -4,3 +4,5 @@ opencv-python-headless
 protobuf
 screeninfo
 pywin32
+pywin32-ctypes
+protobuf==3.20.0
