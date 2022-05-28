@@ -50,7 +50,6 @@ jobs:
 
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: "src/dist/stay-in-${{ env.STAYIN_VERSION }}.zip"
         tag: "${{ env.STAYIN_VERSION }}"
