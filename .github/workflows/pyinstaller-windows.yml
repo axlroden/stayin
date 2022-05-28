@@ -1,7 +1,9 @@
 name: Package exe with PyInstaller - Windows
 
-on: 
+on:
   push:
+    paths:
+      - 'version'
   workflow_dispatch:
 
 jobs:
@@ -49,6 +51,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: "stay-in-${{ env.STAYIN_VERSION }}.zip"
+        files: "src/dist/stay-in-${{ env.STAYIN_VERSION }}.zip"
+        tag: "${{ env.STAYIN_VERSION }}"
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
