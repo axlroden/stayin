@@ -25,15 +25,14 @@ def main():
                             reroute_stdout=True,
                             echo_stdout_stderr=True,
                             reroute_cprint=True)]]
-
     global window
     window = sg.Window('Auto Stay In', layout, finalize=True)
     t1 = Automator()
     while True:
         event, values = window.Read()
-        if event or values is None:
+        if event is None:
             break
-        sleeptime = values['sleeptime']
+        sleeptime = int(values['sleeptime'])
         if event == 'startbutton':
             if t1.is_alive():
                 t1.sleeptime(sleeptime)
@@ -92,7 +91,6 @@ class Automator(threading.Thread):
                     self.state.wait()  # Wait until notified
                     loggedmsg = False
                     continue
-
             # Make sure wow is not running
             if process_exists("WowClassic.exe"):
                 self.logmsg("Killing WoW for fresh start")
@@ -104,7 +102,6 @@ class Automator(threading.Thread):
             subprocess.Popen(cmd, shell=True)
             # Wait for play button
             self.click_play()
-
             # Enter world
             self.logmsg("Waiting for character select")
             while True:
@@ -185,7 +182,7 @@ class Automator(threading.Thread):
         """
         Time we wait for Battle.net GUI to render
         """
-        self.waittime = int(secs)
+        self.waittime = secs
 
     def installpath(self):
         productdb_path = os.getenv('ALLUSERSPROFILE') + "\\Battle.net\\Agent\\product.db"
@@ -216,7 +213,7 @@ class Automator(threading.Thread):
             button_loc_x = 0
             hwnd = win32gui.FindWindow(None, "Battle.net")
             if hwnd == 0:
-                self.sleep(0.3)
+                sleep(0.3)
                 continue
             try:
                 rect = win32gui.GetWindowRect(hwnd)
