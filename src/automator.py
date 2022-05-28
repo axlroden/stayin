@@ -102,6 +102,7 @@ class Automator(threading.Thread):
             subprocess.Popen(cmd, shell=True)
             # Wait for play button
             self.click_play()
+            self.sleep(5)
             # Enter world
             self.logmsg("Waiting for character select")
             while True:
@@ -239,9 +240,12 @@ class Automator(threading.Thread):
                 self.sleep(self.waittime)
                 break
         self.logmsg("Clicking play button")
-        win32api.SetCursorPos((button_loc_x, button_loc_y))
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, button_loc_x, button_loc_y, 0, 0)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, button_loc_x, button_loc_y, 0, 0)
+        try:
+            win32api.SetCursorPos((button_loc_x, button_loc_y))
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, button_loc_x, button_loc_y, 0, 0)
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, button_loc_x, button_loc_y, 0, 0)
+        except BaseException:
+            self.logmsg("Permission error, are you running as administrator?")
 
     def logmsg(self, msg):
         window.Element('_OUTPUT_').Update("{} {}\n".format(datetime.now().strftime("%H:%M:%S"), msg), append=True)
