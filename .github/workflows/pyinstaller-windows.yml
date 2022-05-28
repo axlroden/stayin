@@ -41,8 +41,9 @@ jobs:
       uses: thedoctor0/zip-release@master
       with:
         type: "zip"
+        directory: src/dist/
         filename: "stay-in-${{ env.STAYIN_VERSION }}.zip"
-        path: "src/dist/stayin.exe"
+        path: "stayin.exe"
 
     - name: Release
       uses: softprops/action-gh-release@v1
