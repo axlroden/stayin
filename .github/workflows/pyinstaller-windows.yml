@@ -41,7 +41,7 @@ jobs:
         path: "src/dist/*"
 
     - name: Run UPX
-        uses: crazy-max/ghaction-upx@v2
+      uses: crazy-max/ghaction-upx@v2
         with:
           version: latest
           files: |
