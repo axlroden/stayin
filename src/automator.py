@@ -92,7 +92,7 @@ class Automator(threading.Thread):
                     loggedmsg = False
                     continue
             # Make sure wow is not running
-            if process_exists("WowClassic.exe"):
+            if process_exists("World of Warcraft"):
                 self.logmsg("Killing WoW for fresh start")
                 subprocess.Popen(["taskkill", "/f", "/im", "WowClassic.exe"])
             # Start battle.net launcher
@@ -108,6 +108,9 @@ class Automator(threading.Thread):
                 with self.state:
                     if self.paused:
                         break
+                if not process_exists("World of Warcraft"):
+                    self.logmsg("Can't find WoW window.. Restarting")
+                    break
                 pos = imagesearch(self.change_realm_img)
                 if pos[0] != -1:
                     # Fuck there's queue...
@@ -131,8 +134,8 @@ class Automator(threading.Thread):
                 with self.state:
                     if self.paused:
                         break
-                if not process_exists("WowClassic.exe"):
-                    self.logmsg("WoW not running ? Restarting")
+                if not process_exists("World of Warcraft"):
+                    self.logmsg("Can't find WoW window.. Restarting")
                     break
                 pos = imagesearch(self.wow_img)
                 if pos[0] != -1:
@@ -253,17 +256,15 @@ class Automator(threading.Thread):
             self.state.notify()  # Unblock self if waiting.
 
 
-def process_exists(process_name):
+def process_exists(title_name):
     """
     Check if a process is running.
     """
-    call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
-    # use buildin check_output right away
-    output = subprocess.check_output(call).decode()
-    # check in last line for process name
-    last_line = output.strip().split('\r\n')[-1]
-    # because Fail message could be translated
-    return last_line.lower().startswith(process_name.lower())
+    hwnd = win32gui.FindWindow(None, title_name)
+    if hwnd == 0:
+        return False
+    else:
+        return True
 
 if __name__ == '__main__':
     main()
