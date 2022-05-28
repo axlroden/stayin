@@ -1,7 +1,9 @@
 import os
 import sys
 import random
-import pyautogui  # needed for automating logout/login later
+import win32gui
+import win32api
+import win32con
 import threading
 import subprocess
 import productdb_pb2
@@ -15,8 +17,8 @@ def main():
     """
     Automate WoW classic logins and stay in
     """
-    layout = [[sg.Button('Start', key="startbutton")],
-              [sg.Button('Stop', key="stopbutton")],
+    layout = [[sg.Button('Start', key="startbutton"), sg.Button('Stop', key="stopbutton")],
+              [sg.Input(key='sleeptime', size=(5, 1), default_text='5'), sg.Text('Time to wait for Battle.net window (seconds)')],
               [sg.Multiline(size=(70, 21),
                             write_only=True,
                             key='_OUTPUT_',
@@ -29,12 +31,15 @@ def main():
     t1 = Automator()
     while True:
         event, values = window.Read()
-        if event is None:
+        if event or values is None:
             break
+        sleeptime = values['sleeptime']
         if event == 'startbutton':
             if t1.is_alive():
+                t1.sleeptime(sleeptime)
                 t1.resume()
             else:
+                t1.sleeptime(sleeptime)
                 t1.start()
             window.Element('startbutton').Update('Restart')
         if event == 'stopbutton':
@@ -52,6 +57,7 @@ class Automator(threading.Thread):
         self.paused = True
         self.state = threading.Condition()
         self.daemon = True
+        self.waittime = 5
         self.base_path = getattr(sys, '_MEIPASS', '.') + '/data/'
         self.wow_classic_path, self.bnet_launcher_path = self.installpath()
         self.logmsg("WoW Classic path: {}".format(self.wow_classic_path))
@@ -86,39 +92,18 @@ class Automator(threading.Thread):
                     self.state.wait()  # Wait until notified
                     loggedmsg = False
                     continue
-            # Make sure wow is not running
-            self.logmsg("Killing WoW for fresh start")
-            os.system('taskkill /f /im WowClassic.exe')
 
-            # Launch wow
-            self.logmsg("Run Battle.net launcher if not already open")
+            # Make sure wow is not running
+            if process_exists("WowClassic.exe"):
+                self.logmsg("Killing WoW for fresh start")
+                subprocess.Popen(["taskkill", "/f", "/im", "WowClassic.exe"])
+            # Start battle.net launcher
+            self.logmsg("Run Battle.net launcher/get in focus")
             cmd = '"{}" --game="wow_enus" --gamepath="{}" --productcode="wow_classic"'.format(self.bnet_launcher_path,
                                                                                               self.wow_classic_path)
-
             subprocess.Popen(cmd, shell=True)
             # Wait for play button
-            self.logmsg("Waiting for play button")
-            pos = imagesearch_numLoop(self.play_img, 3, 7)
-            if pos[0] != -1:
-                click_image(self.play_img, pos, "left", 0.2, offset=5)
-            else:
-                self.logmsg("Is there an Update button?")
-                pos = imagesearch_numLoop(self.update_img, 3, 2)
-                if pos[0] != -1:
-                    click_image(self.update_img, pos, "left", 0.2, offset=5)
-                    self.logmsg("Updating..")
-                    pos = imagesearch_numLoop(self.play_img, 3, 40)
-                    self.logmsg("Waiting for play button")
-                    if pos[0] != -1:
-                        click_image(self.play_img, pos, "left", 0.2, offset=5)
-                    else:
-                        self.logmsg("Play button not found after a long time.. try again.")
-                        self.paused = True
-                        continue
-                else:
-                    self.logmsg("Play button not found, \nmake sure Battle.net client is visibile and try again.")
-                    self.paused = True
-                    continue
+            self.click_play()
 
             # Enter world
             self.logmsg("Waiting for character select")
@@ -152,7 +137,7 @@ class Automator(threading.Thread):
                 pos = imagesearch(self.wow_img)
                 if pos[0] != -1:
                     self.logmsg("Not in game anymore.")
-                    # Fuck we are not in game anymore..
+                    # We are not in game anymore..
                     # Checking for Enter World
                     self.logmsg("Checking for Enter World")
                     pos = imagesearch(self.enter_world_img)
@@ -188,13 +173,19 @@ class Automator(threading.Thread):
 
     def sleep(self, secs):
         """
-        Sleeps for x seconds, but pause thread if we stop running.
+        Sleeps for x seconds, but pause thread if we get stopped.
         """
         for i in range(secs):
             with self.state:
                 if self.paused:
                     break
             sleep(1)
+
+    def sleeptime(self, secs):
+        """
+        Time we wait for Battle.net GUI to render
+        """
+        self.waittime = int(secs)
 
     def installpath(self):
         productdb_path = os.getenv('ALLUSERSPROFILE') + "\\Battle.net\\Agent\\product.db"
@@ -214,6 +205,40 @@ class Automator(threading.Thread):
         else:
             self.logmsg("No product.db file found I can't determine your install dir.")
 
+    def click_play(self):
+        """
+        Click on the play button.
+        """
+        while True:
+            with self.state:
+                if self.paused:
+                    break
+            button_loc_x = 0
+            hwnd = win32gui.FindWindow(None, "Battle.net")
+            if hwnd == 0:
+                self.sleep(0.3)
+                continue
+            try:
+                rect = win32gui.GetWindowRect(hwnd)
+                x = rect[0]
+                y = rect[1]
+                w = rect[2] - x
+                h = rect[3] - y
+                button_loc_x = (x + 100)
+                button_loc_y = (y + h - 100)
+            except BaseException:
+                self.logmsg("Error getting Battle.net window size trying again")
+                self.sleep(1)
+                continue
+            if button_loc_x != 0:
+                self.logmsg("Found Battle.net window waiting for gui render for {} secs".format(self.waittime))
+                self.sleep(self.waittime)
+                break
+        self.logmsg("Clicking play button")
+        win32api.SetCursorPos((button_loc_x, button_loc_y))
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, button_loc_x, button_loc_y, 0, 0)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, button_loc_x, button_loc_y, 0, 0)
+
     def logmsg(self, msg):
         window.Element('_OUTPUT_').Update("{} {}\n".format(datetime.now().strftime("%H:%M:%S"), msg), append=True)
 
@@ -225,6 +250,19 @@ class Automator(threading.Thread):
         with self.state:
             self.paused = False
             self.state.notify()  # Unblock self if waiting.
+
+
+def process_exists(process_name):
+    """
+    Check if a process is running.
+    """
+    call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
+    # use buildin check_output right away
+    output = subprocess.check_output(call).decode()
+    # check in last line for process name
+    last_line = output.strip().split('\r\n')[-1]
+    # because Fail message could be translated
+    return last_line.lower().startswith(process_name.lower())
 
 if __name__ == '__main__':
     main()
