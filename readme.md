@@ -1,4 +1,4 @@
-# WoW Classic TBC Auto login and stay in
+# WoW Classic Wrath Auto login and stay in
 
 To combat massive queues on raid day, you can remote into your home computer before queue goes crazy and start this.
 This will check your Battle.net installation, and find the correct folders from its product.db file.

@@ -61,7 +61,7 @@ class Automator(threading.Thread):
         self.wow_classic_path, self.bnet_launcher_path = self.installpath()
         self.logmsg("WoW Classic path: {}".format(self.wow_classic_path))
         self.logmsg("Battle.net Launcher path: {}".format(self.bnet_launcher_path))
-        # Check for 1080/1440p
+        # Check for 1080/1440p/4k
         for m in get_monitors():
             if m.is_primary is True:
                 self.monitor_width = m.width
@@ -70,6 +70,8 @@ class Automator(threading.Thread):
             self.logmsg("Detected 1080p monitor")
         elif self.monitor_height == 1440:
             self.logmsg("Detected 1440p monitor")
+        elif self.monitor_height == 2160:
+            self.logmsg("Detected 4k monitor")
         else:
             self.logmsg("Detected unsupported monitor resolution")
             sys.exit()

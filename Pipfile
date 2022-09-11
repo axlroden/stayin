@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyautogui = "*"
+PySimpleGUI = "*"
+opencv-python-headless = "*"
+pyinstaller = "*"
+screeninfo = "*"
+pywin32 = "*"
+protobuf = "==3.20.0"
+pillow = "*"
+pip = "*"
+install = "*"
+pyyaml = "*"
+
+[dev-packages]
+flake8 = "*"
+
+[requires]
+python_version = "3.10"
