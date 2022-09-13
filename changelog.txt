@@ -4,3 +4,5 @@ Initial release
 Compress exe
 1.1.0
 Add 4k support, add wrath support
+1.1.1
+Adjust click play
