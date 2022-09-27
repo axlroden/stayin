@@ -166,8 +166,8 @@ class Automator(threading.Thread):
                             self.sleep(1)
                             click_image(self.reconnect_img, posreconnect, "left", 0.2, offset=5)
                             # Wait for char select
-                            self.logmsg("wait for char select for 20 secs max")
-                            pos = imagesearch_numLoop(self.enter_world_img, 1, 20)
+                            self.logmsg("wait for char select for 90 secs max")
+                            pos = imagesearch_numLoop(self.enter_world_img, 1, 90)
                             if pos[0] != -1:
                                 click_image(self.enter_world_img, pos, "left", 0.2, offset=5)
                                 self.logmsg("In game!")
