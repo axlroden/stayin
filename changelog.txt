@@ -5,5 +5,7 @@ Wait 90 secs for reconnect
 Add 4k support, add wrath support
 1.0.2
 Compress exe
-1.0.1
-Initial release
+1.1.0
+Add 4k support, add wrath support
+1.1.1
+Adjust click play

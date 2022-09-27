@@ -9,3 +9,9 @@ On disconnects/reconnects it will auto rejoin the server.
 
 Depending on your computer you may have to increase/decrease the time to wait for the Battle.net launcher to render the play button. 
 The default 5 seems ok though.
+
+# Only works this way
+
+* If you have multimonitor run everything on primary monitor.
+* Run fullscreen.
+* Do not use windows scaling, run at normal 100% scaling.

@@ -232,7 +232,7 @@ class Automator(threading.Thread):
                 w = rect[2] - x
                 h = rect[3] - y
                 button_loc_x = (x + 100)
-                button_loc_y = (y + h - 100)
+                button_loc_y = (y + h - 120)
             except BaseException:
                 self.logmsg("Error getting Battle.net window size trying again")
                 self.sleep(1)
