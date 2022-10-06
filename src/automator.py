@@ -24,6 +24,7 @@ def main():
                             key='_OUTPUT_',
                             reroute_stdout=True,
                             echo_stdout_stderr=True,
+                            autoscroll=True,
                             reroute_cprint=True)]]
     global window
     window = sg.Window('Auto Stay In', layout, finalize=True)
